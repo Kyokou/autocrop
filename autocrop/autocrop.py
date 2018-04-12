@@ -76,6 +76,7 @@ def crop(image, fwidth=500, fheight=500):
     # Make padding from biggest face found
     x, y, w, h = faces[-1]
     pad = h / FACE_RATIO
+    print("x: {} y: {} width: {} height: {} pad: {}".format(x,y,w,h,pad))
 
     # Make sure padding is contained within picture
     # decreases pad by 6% increments to fit crop into image.
@@ -88,14 +89,18 @@ def crop(image, fwidth=500, fheight=500):
             break
 
     # Crop the image from the original
-    h1 = int(x-1.5*pad)
+    h1 = int(x - pad - (fwidth/4))
     h2 = int(x+w+1.5*pad)
-    v1 = int(y-2*pad)
+    h3 = int(fwidth + h1)
+    
+    v1 = int(y)
     v2 = int(y+h+pad)
-    image = image[v1:v2, h1:h2]
+    v3 = int((y+h+pad) + (fheight - (h+pad)))
+    print("VStart: {} | VEnd: {} | HStart: {} | HEnd: {}".format(v1,v3,h1,h3))
+    image = image[v1:v3, h1:h3]
 
     # Resize the damn thing
-    image = cv2.resize(image, (fheight, fwidth), interpolation=cv2.INTER_AREA)
+    # image = cv2.resize(image, (fwidth, fheight), interpolation=cv2.INTER_AREA)
 
     # ====== Dealing with underexposition ======
     if FIXEXP:
