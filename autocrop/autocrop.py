@@ -35,7 +35,7 @@ def gamma(img, correction):
     return np.uint8(img*255)
 
 
-def crop(image, fwidth=500, fheight=500):
+def crop(image, fwidth=500, fheight=500, fsize=None):
     """Given a ndarray image with a face, returns cropped array.
 
     Arguments:
@@ -52,6 +52,11 @@ def crop(image, fwidth=500, fheight=500):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     except cv2.error:
         gray = image
+
+    # Set fwidth and fheight if an fsize flag is set
+    if fsize is not None:
+        fwidth = fsize
+        fheight = fsize
 
     # Scale the image
     height, width = (image.shape[:2])
@@ -76,7 +81,6 @@ def crop(image, fwidth=500, fheight=500):
     # Make padding from biggest face found
     x, y, w, h = faces[-1]
     pad = h / FACE_RATIO
-    print("x: {} y: {} width: {} height: {} pad: {}".format(x,y,w,h,pad))
 
     # Make sure padding is contained within picture
     # decreases pad by 6% increments to fit crop into image.
@@ -89,15 +93,47 @@ def crop(image, fwidth=500, fheight=500):
             break
 
     # Crop the image from the original
-    h1 = int(x - pad - (fwidth/4))
-    h2 = int(x+w+1.5*pad)
-    h3 = int(fwidth + h1)
-    
-    v1 = int(y)
-    v2 = int(y+h+pad)
-    v3 = int((y+h+pad) + (fheight - (h+pad)))
-    print("VStart: {} | VEnd: {} | HStart: {} | HEnd: {}".format(v1,v3,h1,h3))
-    image = image[v1:v3, h1:h3]
+    y1 = int(y - round(pad) - (fheight/8))
+    if y1 < 0:
+        y1 = 0
+
+    y2 = int(y1 + fheight)
+    if y1 == 0:
+        y2 = fheight
+
+    x1 = int(x - round(pad) - (fwidth/12))
+    if x1 < 0:
+        x1 = 0
+
+    x2 = int(x1 + fwidth)
+    if x1 == 0:
+        x2 = fwidth
+
+    print("x1: {} | x2: {} \ny1: {} | y2: {}".format(x1,x2,y1,y2))
+
+
+    while fwidth > x2 - x1:
+        x2 = x2 - 1
+        x1 = x1 + 2
+
+    while fheight > y2 - y1:
+            y2 = y2 - 1
+            y1 = y1 + 2
+
+    while x2 > width:
+        x2 = x2 - 1
+        x1 = x1 - 1
+        if x2 == width:
+            x2 = (x2 - round((x1 / 2)))
+            x1 = x1 - round((x1 / 2))
+
+    while y2 > height:
+        y2 = y2 - 1
+        y1 = y1 - 1
+
+    print("w: {} | h:  {}".format(width, height))
+    print("changed_x1: {} | changed_x2: {} \nchanged_y1: {} | changed_y2: {}".format(x1,x2,y1,y2))
+    image = image[y1:y2, x1:x2]
 
     # Resize the damn thing
     # image = cv2.resize(image, (fwidth, fheight), interpolation=cv2.INTER_AREA)
@@ -111,7 +147,7 @@ def crop(image, fwidth=500, fheight=500):
     return image
 
 
-def main(input_d, output_d, fheight=500, fwidth=500):
+def main(input_d, output_d, fheight=500, fwidth=500, fsize=None):
     """Crops folder of images to the desired height and width if a face is found
 
     If input_d == output_d or output_d is None, overwrites all files
@@ -134,6 +170,11 @@ def main(input_d, output_d, fheight=500, fwidth=500):
     files = [os.path.join(input_d, f) for f in os.listdir(input_d)
              if any(f.endswith(t) for t in INPUT_FILETYPES)]
 
+    # Set fwidth and fheight if an fsize flag is set
+    if fsize is not None:
+        fwidth = fsize
+        fheight = fsize
+
     # Guard against calling the function directly
     assert len(files) > 0
 
@@ -151,7 +192,7 @@ def main(input_d, output_d, fheight=500, fwidth=500):
 
         # Perform the actual crop
         input_img = cv2.imread(f)
-        image = crop(input_img, fwidth, fheight)
+        image = crop(input_img, fwidth, fheight, fsize)
 
         # Make sure there actually was a face in there
         if isinstance(image, type(None)):
@@ -265,6 +306,8 @@ Default: current working directory''',
 Default: current working directory''',
             'width': 'Width of cropped files in px. Default=500',
             'height': 'Height of cropped files in px. Default=500',
+            'size': '''Sets the width and height in px.
+Overrides width and height arguments if set.''',
             'y': 'Bypass any confirmation prompts',
             }
 
@@ -277,6 +320,8 @@ Default: current working directory''',
                         default=500, help=help_d['width'])
     parser.add_argument('-H', '--height',
                         type=size, default=500, help=help_d['height'])
+    parser.add_argument('-s', '--size',
+                        type=size, default=None, help=help_d['size'])
     parser.add_argument('-v', '--version', action='version',
                         version='%(prog)s version {}'.format(__version__))
     parser.add_argument('--no-confirm', action='store_true', help=help_d['y'])
@@ -292,4 +337,4 @@ def cli():
     if args.input == args.output:
         args.output = None
     print('Processing images in folder:', args.input)
-    main(args.input, args.output, args.height, args.width)
+    main(args.input, args.output, args.height, args.width, args.size)
