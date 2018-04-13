@@ -97,7 +97,7 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
     if y1 < 0:
         y1 = 0
 
-    y2 = int(y1 + fheight)
+    y2 = int(y + h + round(pad))
     if y1 == 0:
         y2 = fheight
 
@@ -105,20 +105,19 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
     if x1 < 0:
         x1 = 0
 
-    x2 = int(x1 + fwidth)
+    x2 = int(x + w + round(pad))
     if x1 == 0:
         x2 = fwidth
 
     print("x1: {} | x2: {} \ny1: {} | y2: {}".format(x1,x2,y1,y2))
 
-
     while fwidth > x2 - x1:
-        x2 = x2 - 1
-        x1 = x1 + 2
+        x2 = x2 + 1
+        x1 = x1 - 1
 
-    while fheight > y2 - y1:
-            y2 = y2 - 1
-            y1 = y1 + 2
+    while fheight < y2 - y1:
+        y2 = y2 + 1
+        y1 = y1 - 1
 
     while x2 > width:
         x2 = x2 - 1
@@ -132,7 +131,8 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
         y1 = y1 - 1
 
     print("w: {} | h:  {}".format(width, height))
-    print("changed_x1: {} | changed_x2: {} \nchanged_y1: {} | changed_y2: {}".format(x1,x2,y1,y2))
+    print("x: {} y: {} w: {} h: {}".format(x,y,w,h))
+    print("changed_x1: {} | changed_x2: {} \nchanged_y1: {} | changed_y2: {}\npad: {}".format(x1,x2,y1,y2,pad))
     image = image[y1:y2, x1:x2]
 
     # Resize the damn thing
