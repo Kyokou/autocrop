@@ -112,12 +112,40 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
     print("x1: {} | x2: {} \ny1: {} | y2: {}".format(x1,x2,y1,y2))
 
     while fwidth > x2 - x1:
-        x2 = x2 + 1
-        x1 = x1 - 1
+        step = 0
+        if step == 0:
+            x2 = x2 + 1
+            step = 1
+        elif step == 1:
+            x1 = x1 - 1
+            step = 0
 
-    while fheight < y2 - y1:
-        y2 = y2 + 1
-        y1 = y1 - 1
+    while fheight > y2 - y1:
+        step = 0
+        if step == 0:
+            y2 = y2 + 1
+            step = 1
+        elif step == 1:
+            y1 = y1 - 1
+            step = 0
+
+    while x2 - x1 > fwidth:
+        step = 0
+        if step == 0:
+            x2 = x2 - 1
+            step = 1
+        elif step == 1:
+            x1 = x1 - 1
+            step = 0
+
+    while y2 - y1 > fheight:
+        step = 0
+        if step == 0:
+            y2 = y2 - 1
+            step = 1
+        elif step == 1:
+            y1 = y1 - 1
+            step = 0
 
     while x2 > width:
         x2 = x2 - 1
@@ -129,6 +157,7 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
     while y2 > height:
         y2 = y2 - 1
         y1 = y1 - 1
+        
 
     print("w: {} | h:  {}".format(width, height))
     print("x: {} y: {} w: {} h: {}".format(x,y,w,h))
