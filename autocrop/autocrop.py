@@ -8,16 +8,14 @@ import numpy as np
 import os
 import shutil
 import sys
-import math
 
 from .__version__ import __version__
 
-FIXEXP = True  # Flag to fix underexposition
+FIXEXP = False  # Flag to fix underexposition
 MINFACE = 8  # Minimum face size ratio; too low and we get false positives
 INCREMENT = 0.06
 GAMMA_THRES = 0.001
 GAMMA = 0.90
-FACE_RATIO = 6  # Face / padding ratio
 QUESTION_OVERWRITE = "Overwrite image files?"
 FILETYPES = ['.jpg', '.jpeg', '.bmp', '.dib', '.jp2',
              '.png', '.webp', '.pbm', '.pgm', '.ppm',
@@ -81,67 +79,40 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
 
     # Make padding from biggest face found
     x, y, w, h = faces[-1]
-    pad = h / FACE_RATIO
+    
+    x1 = int(x)
+    x2 = int(x + w)
+    y1 = int(y)
+    y2 = int(y + h)
 
-    # Make sure padding is contained within picture
-    # decreases pad by 6% increments to fit crop into image.
-    # Can lead to very small faces.
-    while True:
-        if (y-2*pad < 0 or y+h+pad > height or
-                int(x-1.5*pad) < 0 or x+w+int(1.5*pad) > width):
-            pad = (1 - INCREMENT) * pad
-        else:
-            break
 
-    # Crop the image from the original
+    # Grow 1px at a time until we
+    # meet the final width, alternating sides
+    h_step = "grow_right"    
+    while fwidth > x2 - x1:
+        if h_step == "grow_right":
+            x2 = x2 + 1
+            h_step = "grow_left"
+        elif h_step == "grow_left":
+            x1 = x1 - 1
+            h_step = "grow_right"
 
-    RNDPAD = round(pad)
-    RATIO = h / FACE_RATIO
-    SPACE = RATIO * RNDPAD
+    # Grow 1px at a time until we
+    # meet the final height, alternating sides
+    v_step = "grow_down"
+    while fheight > y2 - y1:
+        if v_step == "grow_down":
+            y2 = y2 + 1
+            v_step = "grow_up"
+        elif v_step == "grow_up":
+            y1 = y1 - 1
+            v_step = "grow_down"
 
-    x1 = int(x - SPACE)
-    # Prevent going out of bounds
+    # Avoid going out of bounds
     if x1 < 0:
         x1 = 0
-
-    x2 = int(x + w + SPACE)
-    # If we went out of bounds this will
-    # force our size constraints for width
-    if x1 == 0:
-        x2 = fwidth
-    
-    y1 = int(y - SPACE)
-    # Prevent going out of bounds
     if y1 < 0:
         y1 = 0
-
-    y2 = int(y + h + SPACE)
-    # If we went out of bounds this will
-    # force our size constraints for width
-    if y1 == 0:
-        y2 = fheight
-
-    # Grow 1px at a time until we
-    # meet the final width
-    while fwidth > x2 - x1:
-        step = "grow_left"
-        if step == "grow_right":
-            x2 = x2 + 1
-            step = "grow_left"
-        elif step == "grow_left":
-            x1 = x1 - 1
-            step = "grow_right"
-
-    # Grow 1px at a time until we
-    # meet the final height
-    while fheight > y2 - y1:
-        step = "grow_down"
-        if step == "grow_down":
-            y2 = y2 + 1
-            step = "grow_up"
-        elif step == "grow_up":
-            y1 = y1 - 1
-            step = "grow_down"
 
     # If image would be cropped outside of bounds,
     # adjust to be within bounds by moving left until
@@ -149,6 +120,9 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
     while x2 > width:
         x2 = x2 - 1
         x1 = x1 - 1
+        # If we were out of bounds we know our size.
+        if x1 == 0:
+            x2 = fwidth
 
     # If image would be cropped outside of bounds,
     # adjust to be within bounds by moving up until
@@ -156,11 +130,11 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
     while y2 > height:
         y2 = y2 - 1
         y1 = y1 - 1
+        # If we were out of bounds we know our size.
+        if y1 == 0:
+            y2 = fheight
         
     image = image[y1:y2, x1:x2]
-
-    # Resize the damn thing
-    # image = cv2.resize(image, (fwidth, fheight), interpolation=cv2.INTER_AREA)
 
     # ====== Dealing with underexposition ======
     if FIXEXP:
