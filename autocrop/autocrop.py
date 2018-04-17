@@ -105,7 +105,8 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
         x1 = 0
 
     x2 = int(x + w + SPACE)
-    # 0 --> fwidth will be as wide as fwidth
+    # If we went out of bounds this will
+    # force our size constraints for width
     if x1 == 0:
         x2 = fwidth
     
@@ -115,12 +116,13 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
         y1 = 0
 
     y2 = int(y + h + SPACE)
-    # 0 --> fheight will be as tall as fheight
+    # If we went out of bounds this will
+    # force our size constraints for width
     if y1 == 0:
         y2 = fheight
 
-    # If image is too small
-    # Grow to meet the final width
+    # Grow 1px at a time until we
+    # meet the final width
     while fwidth > x2 - x1:
         step = "grow_left"
         if step == "grow_right":
@@ -130,8 +132,8 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
             x1 = x1 - 1
             step = "grow_right"
 
-    # If image is too small
-    # Grow to meet the final height
+    # Grow 1px at a time until we
+    # meet the final height
     while fheight > y2 - y1:
         step = "grow_down"
         if step == "grow_down":
@@ -141,14 +143,16 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
             y1 = y1 - 1
             step = "grow_down"
 
-    # If image is outside of bounds
-    # Adjust to be within bounds
+    # If image would be cropped outside of bounds,
+    # adjust to be within bounds by moving left until
+    # the outer constraint is within the width again
     while x2 > width:
         x2 = x2 - 1
         x1 = x1 - 1
 
-    # If image is outside of bounds
-    # Adjust to be within bounds
+    # If image would be cropped outside of bounds,
+    # adjust to be within bounds by moving up until
+    # the outer constraint is within the height again
     while y2 > height:
         y2 = y2 - 1
         y1 = y1 - 1
