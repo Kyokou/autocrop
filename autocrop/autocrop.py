@@ -8,6 +8,7 @@ import numpy as np
 import os
 import shutil
 import sys
+import math
 
 from .__version__ import __version__
 
@@ -93,65 +94,61 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
             break
 
     # Crop the image from the original
-    y1 = int(y - (((x+w)/(y+h)) * round(pad)))
-    if y1 < 0:
-        y1 = 0
 
-    y2 = int(y + h + round(pad))
-    if y1 == 0:
-        y2 = fheight
+    RNDPAD = round(pad)
+    RATIO = h / FACE_RATIO
+    SPACE = RATIO * RNDPAD
 
-    x1 = int(x - (((x+w)/(y+h)) * round(pad)))
+    x1 = int(x - SPACE)
+    # Prevent going out of bounds
     if x1 < 0:
         x1 = 0
 
-    x2 = int(x + w + (((x+w)/(y+h)) * round(pad)))
+    x2 = int(x + w + SPACE)
+    # 0 --> fwidth will be as wide as fwidth
     if x1 == 0:
         x2 = fwidth
+    
+    y1 = int(y - SPACE)
+    # Prevent going out of bounds
+    if y1 < 0:
+        y1 = 0
 
+    y2 = int(y + h + SPACE)
+    # 0 --> fheight will be as tall as fheight
+    if y1 == 0:
+        y2 = fheight
+
+    # If image is too small
+    # Grow to meet the final width
     while fwidth > x2 - x1:
-        step = 0
-        if step == 0:
+        step = "grow_left"
+        if step == "grow_right":
             x2 = x2 + 1
-            step = 1
-        elif step == 1:
+            step = "grow_left"
+        elif step == "grow_left":
             x1 = x1 - 1
-            step = 0
+            step = "grow_right"
 
+    # If image is too small
+    # Grow to meet the final height
     while fheight > y2 - y1:
-        step = 0
-        if step == 0:
+        step = "grow_down"
+        if step == "grow_down":
             y2 = y2 + 1
-            step = 1
-        elif step == 1:
+            step = "grow_up"
+        elif step == "grow_up":
             y1 = y1 - 1
-            step = 0
+            step = "grow_down"
 
-    while x2 - x1 > fwidth:
-        step = 0
-        if step == 0:
-            x2 = x2 - 2
-            step = 1
-        elif step == 1:
-            x1 = x1 - 1
-            step = 0
-
-    while y2 - y1 > fheight:
-        step = 0
-        if step == 0:
-            y2 = y2 - 2
-            step = 1
-        elif step == 1:
-            y1 = y1 - 1
-            step = 0
-
+    # If image is outside of bounds
+    # Adjust to be within bounds
     while x2 > width:
         x2 = x2 - 1
         x1 = x1 - 1
-        if x2 == width:
-            x2 = (x2 - round((x1 / 2)))
-            x1 = x1 - round((x1 / 2))
 
+    # If image is outside of bounds
+    # Adjust to be within bounds
     while y2 > height:
         y2 = y2 - 1
         y1 = y1 - 1
