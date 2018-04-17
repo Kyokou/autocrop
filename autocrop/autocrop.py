@@ -93,7 +93,7 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
             break
 
     # Crop the image from the original
-    y1 = int(y - round(pad) - (fheight/8))
+    y1 = int(y - (((x+w)/(y+h)) * round(pad)))
     if y1 < 0:
         y1 = 0
 
@@ -101,23 +101,51 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
     if y1 == 0:
         y2 = fheight
 
-    x1 = int(x - round(pad) - (fwidth/12))
+    x1 = int(x - (((x+w)/(y+h)) * round(pad)))
     if x1 < 0:
         x1 = 0
 
-    x2 = int(x + w + round(pad))
+    x2 = int(x + w + (((x+w)/(y+h)) * round(pad)))
     if x1 == 0:
         x2 = fwidth
 
     print("x1: {} | x2: {} \ny1: {} | y2: {}".format(x1,x2,y1,y2))
 
     while fwidth > x2 - x1:
-        x2 = x2 + 1
-        x1 = x1 - 1
+        step = 0
+        if step == 0:
+            x2 = x2 + 1
+            step = 1
+        elif step == 1:
+            x1 = x1 - 1
+            step = 0
 
-    while fheight < y2 - y1:
-        y2 = y2 + 1
-        y1 = y1 - 1
+    while fheight > y2 - y1:
+        step = 0
+        if step == 0:
+            y2 = y2 + 1
+            step = 1
+        elif step == 1:
+            y1 = y1 - 1
+            step = 0
+
+    while x2 - x1 > fwidth:
+        step = 0
+        if step == 0:
+            x2 = x2 - 2
+            step = 1
+        elif step == 1:
+            x1 = x1 - 1
+            step = 0
+
+    while y2 - y1 > fheight:
+        step = 0
+        if step == 0:
+            y2 = y2 - 2
+            step = 1
+        elif step == 1:
+            y1 = y1 - 1
+            step = 0
 
     while x2 > width:
         x2 = x2 - 1
@@ -129,6 +157,7 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
     while y2 > height:
         y2 = y2 - 1
         y1 = y1 - 1
+        
 
     print("w: {} | h:  {}".format(width, height))
     print("x: {} y: {} w: {} h: {}".format(x,y,w,h))
