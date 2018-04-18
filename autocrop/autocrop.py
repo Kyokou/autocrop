@@ -87,16 +87,15 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
 
     # Make padding from biggest face found
     x, y, w, h = faces[-1]
-    
+
     x1 = int(x)
     x2 = int(x + w)
     y1 = int(y)
     y2 = int(y + h)
 
-
     # Grow 1px at a time until we
     # meet the final width, alternating sides
-    h_step = "grow_right"    
+    h_step = "grow_right"
     while fwidth > x2 - x1:
         if h_step == "grow_right":
             x2 = x2 + 1
@@ -141,7 +140,7 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
         # If we were out of bounds we know our size.
         if y1 == 0:
             y2 = fheight
-        
+
     image = image[y1:y2, x1:x2]
 
     # ====== Dealing with underexposition ======
@@ -291,7 +290,6 @@ def confirmation(question, default=True):
 
     while True:
         choice = compat_input(prompt_str).lower()
-
         if not choice and default is not None:
             return default
         if choice in yes_list:
