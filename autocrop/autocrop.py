@@ -61,6 +61,14 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
     height, width = (image.shape[:2])
     minface = int(np.sqrt(height**2 + width**2) / MINFACE)
 
+    # Can't be larger than our source
+    if fheight > height:
+        fheight = height
+        print("Height constrained to source.")
+    if fwidth > width:
+        fwidth = width
+        print("Width constrained to source.")
+
     # Create the haar cascade
     faceCascade = cv2.CascadeClassifier(cascPath)
 
