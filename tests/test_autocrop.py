@@ -61,7 +61,13 @@ def test_crop_noise_returns_none():
 def test_obama_has_a_face():
     loc = 'tests/data/obama.jpg'
     obama = cv2.imread(loc)
-    assert len(crop(obama, 500, 500)) == 500
+    assert len(crop(obama, 350, 350)) == 350
+
+
+def test_size_changes_width_and_height():
+    loc = 'tests/data/obama.jpg'
+    obama = cv2.imread(loc)
+    assert len(crop(obama, None, None, 350)) == 350
 
 
 def test_size_140_is_valid():
@@ -99,8 +105,7 @@ def test_cli_no_args_means_cwd(mock_main):
     sys.argv = ['', '--no-confirm']
     cli()
     args, _ = mock_main.call_args
-    assert args == ('.', None, 500, 500)
-
+    assert args == ('.', None, 500, 500, None)
 
 @mock.patch('autocrop.autocrop.input_path', lambda p: p)
 @mock.patch('autocrop.autocrop.main')
@@ -238,4 +243,4 @@ def test_image_files_overwritten_if_no_output_dir(integration):
     assert len(output_files) == 10
     # Images with a face have been cropped
     shape = cv2.imread('tests/test/king.jpg').shape
-    assert shape == (500, 500, 3)
+    assert shape == (350, 350, 3)
