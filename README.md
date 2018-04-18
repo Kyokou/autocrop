@@ -24,6 +24,8 @@ From the command line:
 				Width of cropped files in px. Default=500
 	  -H, --height
 				Height of cropped files in px. Default=500
+	  -s, --size
+	                        Set width and height of cropped files in px. Overrides width and height if set. Default=None
 	  -v, --version         Show program's version number and exit
 
 * Example: `autocrop -i pics -o crop -w 400 -H 400`.
