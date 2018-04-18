@@ -33,6 +33,37 @@ def gamma(img, correction):
     img = cv2.pow(img/255.0, correction)
     return np.uint8(img*255)
 
+def resize(image, width=None, height=None, inter=cv2.INTER_AREA):
+    # initialize the dimensions of the image to be resized and
+    # grab the image size
+    dim = None
+    (h, w) = image.shape[:2]
+
+    # if both the width and height are None, then return the
+    # original image
+    if width is None and height is None:
+        return image
+
+    # check to see if the width is None
+    if width is None:
+        # calculate the ratio of the height and construct the
+        # dimensions
+        r = height / float(h)
+        dim = (int(w * r), height)
+
+    # otherwise, the height is None
+    else:
+        # calculate the ratio of the width and construct the
+        # dimensions
+        r = width / float(w)
+        dim = (width, int(h * r))
+
+    # resize the image
+    resized = cv2.resize(image, dim, interpolation=inter)
+
+    # return the resized image
+    return resized
+
 
 def crop(image, fwidth=500, fheight=500, fsize=None):
     """Given a ndarray image with a face, returns cropped array.
@@ -64,10 +95,8 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
     # Can't be larger than our source
     if fheight > height:
         fheight = height
-        print("Height constrained to source.")
     if fwidth > width:
         fwidth = width
-        print("Width constrained to source.")
 
     # Create the haar cascade
     faceCascade = cv2.CascadeClassifier(cascPath)
@@ -85,13 +114,81 @@ def crop(image, fwidth=500, fheight=500, fsize=None):
     if len(faces) == 0:
         return None
 
-    # Make padding from biggest face found
+    # Grab coordinates for face
     x, y, w, h = faces[-1]
 
     x1 = int(x)
     x2 = int(x + w)
     y1 = int(y)
     y2 = int(y + h)
+
+    # If the face is larger than constraints resize
+    # to fit within the constraints then add padding
+    if x + w > fwidth:
+        image = resize(image, width = fwidth)
+        # Recapture the face after resize
+        height, width = (image.shape[:2])
+        minface = int(np.sqrt(height**2 + width**2) / MINFACE)
+
+        # Can't be larger than our source
+        if fheight > height:
+            fheight = height
+        if fwidth > width:
+            fwidth = width
+
+        # Create the haar cascade
+        faceCascade = cv2.CascadeClassifier(cascPath)
+
+        faces = faceCascade.detectMultiScale(
+            gray,
+            scaleFactor=1.1,
+            minNeighbors=5,
+            minSize=(minface, minface),
+            flags=cv2.CASCADE_FIND_BIGGEST_OBJECT | cv2.CASCADE_DO_ROUGH_SEARCH,
+        )
+
+        # Handle no faces
+        if len(faces) == 0:
+            return None
+
+        x, y, w, h = faces[-1]
+        x1 = int(x)
+        x2 = int(x + w)
+        y1 = int(y)
+        y2 = int(y + h)
+
+    if y + h > fheight:
+        image = resize(image, height = fheight)
+        # Recapture the face after resize
+        height, width = (image.shape[:2])
+        minface = int(np.sqrt(height**2 + width**2) / MINFACE)
+
+        # Can't be larger than our source
+        if fheight > height:
+            fheight = height
+        if fwidth > width:
+            fwidth = width
+
+        # Create the haar cascade
+        faceCascade = cv2.CascadeClassifier(cascPath)
+
+        faces = faceCascade.detectMultiScale(
+            gray,
+            scaleFactor=1.1,
+            minNeighbors=5,
+            minSize=(minface, minface),
+            flags=cv2.CASCADE_FIND_BIGGEST_OBJECT | cv2.CASCADE_DO_ROUGH_SEARCH,
+        )
+
+        # Handle no faces
+        if len(faces) == 0:
+            return None
+
+        x, y, w, h = faces[-1]
+        x1 = int(x)
+        x2 = int(x + w)
+        y1 = int(y)
+        y2 = int(y + h)
 
     # Grow 1px at a time until we
     # meet the final width, alternating sides
